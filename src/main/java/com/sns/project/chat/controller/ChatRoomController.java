@@ -51,13 +51,6 @@ public class ChatRoomController {
         return ApiResult.success(new AllChatRoomResponse(chatRoomService.getUserChatRooms(user)));
     }
 
-    @GetMapping("/history/{roomId}")
-    public ApiResult<ChatHistoryResponse> getChatHistory(@PathVariable Long roomId) {
-        System.out.println("✅ [DEBUG] ChatRoomController getChatHistory 호출");
-        ChatHistoryResponse res = new ChatHistoryResponse(chatService.getChatHistory(roomId));
-        return ApiResult.success(res); 
-    }
-    
 
     @PostMapping("/room/{roomId}/enter")
     @AuthRequired

@@ -22,6 +22,7 @@ import com.sns.project.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Deprecated
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -39,35 +40,19 @@ public class ChatService {
 
 
     @Transactional
-    public ChatMessageResponse saveMessage(Long senderId, String message, Long roomId) {
+    public Long saveMessage(Long roomId, Long senderId, String message) {
+
         ChatRoom chatRoom = chatRoomRepository.findById(roomId)
             .orElseThrow(() -> new ChatRoomNotFoundException(roomId));
         User sender = userService.getUserById(senderId);
 
         // 1. Save message and cache in Redis
-        ChatMessage savedMessage = saveAndCacheMessage(chatRoom, sender, message, roomId);
-
-
-        // 2. Process unread count with Lua script
-        MessageProcessResult result = redisLuaService.processNewMessage(
-            Chat.CHAT_ROOM_PARTICIPANTS_SET_KEY.getParticipants(roomId),
-            Chat.CONNECTED_USERS_SET_KEY.getConnectedKey(roomId),
-            Chat.CHAT_UNREAD_COUNT_HASH_KEY.getUnreadCountKey(),
-            Chat.CHAT_LAST_READ_MESSAGE_ID.getLastReadMessageKeyPattern(),
-            Chat.CHAT_MESSAGES_KEY.getMessagesKey(roomId),
-            roomId.toString(),
-            savedMessage.getId().toString(),
-            senderId.toString()
-        );
-
-//        System.out.println("OMGOMG" + unreadCount);
-//        System.out.println(stringRedisService.getSetMembers(Chat.CHAT_ROOM_PARTICIPANTS_SET_KEY.getParticipants(roomId)));
-//        System.out.println(stringRedisService.getSetMembers(Chat.CONNECTED_USERS_SET_KEY.getConnectedKey(roomId)));
-
-        System.out.println("OMGOMG");
-        result.getReadUsers().forEach(System.out::println);
-        return new ChatMessageResponse(savedMessage, result.getUnreadCount());
+        ChatMessage savedMessage = chatMessageRepository.save(new ChatMessage(chatRoom, sender, message));
+        
+        return savedMessage.getId();
     }
+
+
 
     private ChatMessage saveAndCacheMessage(ChatRoom chatRoom, User sender, String message, Long roomId) {
         ChatMessage chatMessage = new ChatMessage(chatRoom, sender, message);
@@ -84,14 +69,5 @@ public class ChatService {
 
 
 
-    @Transactional
-    public List<ChatMessageResponse> getChatHistory(Long roomId) {
-        List<ChatMessage> messages = chatMessageRepository.findByChatRoomIdWithUser(roomId);
-        return messages.stream().map(msg -> {
-            String unreadKey = RedisKeys.Chat.CHAT_UNREAD_COUNT_HASH_KEY.getUnreadCountKey();
-            String unreadCount = stringRedisService.getHashValue(unreadKey, String.valueOf(msg.getId()))
-            .orElseThrow(() -> new RuntimeException("Unread count not found"));
-            return new ChatMessageResponse(msg, Long.valueOf(unreadCount));
-        }).collect(Collectors.toList());
-    }
+
 }

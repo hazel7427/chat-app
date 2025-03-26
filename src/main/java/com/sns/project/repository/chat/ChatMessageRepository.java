@@ -20,4 +20,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     @Query("SELECT cm FROM ChatMessage cm WHERE cm.chatRoom.id = :roomId ORDER BY cm.id DESC LIMIT 1")
     ChatMessage findLastMessage(Long roomId);
+
+    @Query("SELECT cm FROM ChatMessage cm WHERE cm.chatRoom.id = :roomId")
+    List<ChatMessage> findAllByRoomId(Long roomId);
 }

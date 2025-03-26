@@ -108,4 +108,19 @@ public class ChatRedisService {
     }
 
 
+    public boolean hasKey(String key) {
+        return chatRedisTemplate.hasKey(key);
+    }
+
+
+    public Long getZSetSize(String key) {
+        return chatRedisTemplate.opsForZSet().size(key);
+    }
+
+
+    public Long getSetSize(String key) {
+        return chatRedisTemplate.opsForSet().size(key);
+    }
+
+
 } 

@@ -7,11 +7,16 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+
+import com.sns.project.chat.dto.KafkaNewMessageDto;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 //@RequiredArgsConstructor
@@ -23,13 +28,13 @@ public class RedisLuaService {
         this.redisTemplate = redisTemplate;
     }
     private static final DefaultRedisScript<Long> PROCESS_UNREAD_SCRIPT;
-    private static final DefaultRedisScript<Object> PROCESS_NEW_MESSAGE_SCRIPT;
+    private static final DefaultRedisScript<List> PROCESS_NEW_MESSAGE_SCRIPT;
 
     static {
         try {
             // Lua 스크립트 파일 로드
             PROCESS_UNREAD_SCRIPT = new DefaultRedisScript<>(loadScript("lua/process_unread.lua"), Long.class);
-            PROCESS_NEW_MESSAGE_SCRIPT = new DefaultRedisScript<>(loadScript("lua/process_new_message.lua"), Object.class);
+            PROCESS_NEW_MESSAGE_SCRIPT = new DefaultRedisScript<>(loadScript("lua/process_new_message.lua"), List.class);
 
         } catch (IOException e) {
             throw new RuntimeException("Lua 스크립트 로드 실패", e);
@@ -69,7 +74,7 @@ public class RedisLuaService {
      * 
      * praticipants, lastread id, messages should be cached in redis
      */
-    public MessageProcessResult processNewMessage(
+    public KafkaNewMessageDto processNewMessage(
     String participantsKey,
     String connectedUsersKey,
     String unreadCountHashKey,
@@ -88,19 +93,19 @@ public class RedisLuaService {
     if (rawResult instanceof List resultList && resultList.size() == 2) {
         Long unreadCount = Long.parseLong(resultList.get(0).toString());
 
-        @SuppressWarnings("unchecked")
-        List<String> readUsers = (List<String>) resultList.get(1);
 
-        return new MessageProcessResult(unreadCount, readUsers);
+
+        @SuppressWarnings("unchecked")
+        List<Object> rawReadUserIds = (List<Object>) resultList.get(1);
+
+        Set<Long> readUserIds = rawReadUserIds.stream()
+            .map(Object::toString)
+            .map(Long::parseLong)
+            .collect(Collectors.toSet());
+
+        return new KafkaNewMessageDto(unreadCount, readUserIds);
     }
 
-    return new MessageProcessResult(0L, List.of());
+    return new KafkaNewMessageDto(0L, Set.of());
 }
-}
-
-@RequiredArgsConstructor
-@Getter
-class MessageProcessResult {
-    private final Long unreadCount;
-    private final List<String> readUsers;
 }

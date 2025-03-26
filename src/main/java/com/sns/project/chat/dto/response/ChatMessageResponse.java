@@ -1,28 +1,25 @@
 package com.sns.project.chat.dto.response;
 
-import java.time.format.DateTimeFormatter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
-import com.sns.project.domain.chat.ChatMessage;
+import java.util.List;
+import lombok.NoArgsConstructor;
 
-import lombok.Data;
-import lombok.ToString;
-
-@Data
-@ToString
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ChatMessageResponse {
-    private Long id;
-    private String message;
-    private String sentAt;
-    private Long senderId;
-    private String senderName;
-    private Long unreadCount;
 
-    public ChatMessageResponse(ChatMessage chatMessage, Long unreadCount) {
-        this.id = chatMessage.getId();
-        this.message = chatMessage.getMessage();
-        this.sentAt = chatMessage.getSentAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        this.senderId = chatMessage.getSender().getId();
-        this.senderName = chatMessage.getSender().getName();
-        this.unreadCount = unreadCount;
-    }
+    private String type;            // "MESSAGE", "READ", "JOIN" 등
+    private Long messageId;         // 메시지 ID (MESSAGE, READ 타입일 때)
+    private Long roomId;            // 채팅방 ID
+    private Long senderId;          // 보낸 유저 ID
+    private String content;         // 메시지 내용 (MESSAGE 타입일 때)
+    private Long timestamp;         // 메시지 전송 시간 (선택)
+
+    private Integer unreadCount;    // 안 읽은 수 (MESSAGE 타입일 때)
+//    private List<Long> readUserIds; // 읽은 유저 ID 목록 (READ 타입일 때)
 }

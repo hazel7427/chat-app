@@ -88,6 +88,8 @@ dependencies {
 	implementation 'com.google.guava:guava:32.1.2-jre'
 
 	implementation 'org.json:json:20210307'
+	implementation 'org.springframework.kafka:spring-kafka'
+
 
 }
 
