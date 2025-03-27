@@ -27,7 +27,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 import com.sns.project.DataLoader;
 import com.sns.project.config.constants.RedisKeys;
-import com.sns.project.chat.dto.response.ChatMessageResponse;
+import com.sns.project.chat.dto.response.WebsocketBroadcastResponse;
 import com.sns.project.controller.user.dto.request.RequestRegisterDto;
 import com.sns.project.domain.chat.ChatRoom;
 import com.sns.project.domain.user.User;
@@ -168,7 +168,7 @@ class ChatServiceIntegrationTest {
         ChatRoom chatRoom = chatRoomRepository.findAll().get(0);
 
         // 메시지 전송
-        ChatMessageResponse savedMessage = chatService.saveMessage(
+        WebsocketBroadcastResponse savedMessage = chatService.saveMessage(
             sender.getId(), 
             "test message", 
             chatRoom.getId()
@@ -230,7 +230,7 @@ class ChatServiceIntegrationTest {
         stringRedisService.addToSet(connectedUsersKey, receiver.getId().toString());
 
         // when
-        ChatMessageResponse savedMessage = chatService.saveMessage(
+        WebsocketBroadcastResponse savedMessage = chatService.saveMessage(
             sender.getId(), 
             "test message", 
             chatRoom.getId()
@@ -288,7 +288,7 @@ class ChatServiceIntegrationTest {
         );
 
         // Simulate a new message arriving
-        ChatMessageResponse lastSentMessage = chatService.saveMessage(
+        WebsocketBroadcastResponse lastSentMessage = chatService.saveMessage(
             sender.getId(), 
             "new message", 
             chatRoom.getId()

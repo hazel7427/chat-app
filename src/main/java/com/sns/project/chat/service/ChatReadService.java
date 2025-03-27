@@ -4,6 +4,7 @@ import com.sns.project.repository.UserRepository;
 import com.sns.project.repository.chat.ChatMessageRepository;
 import com.sns.project.repository.chat.ChatReadStatusRepository;
 import com.sns.project.repository.chat.ChatRoomRepository;
+import com.sns.project.service.user.UserService;
 
 import jakarta.transaction.Transactional;
 
@@ -28,11 +29,13 @@ public class ChatReadService {
     private final ChatReadStatusRepository chatReadStatusRepository;
     private final UserRepository userRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final UserService userService;
+    private final ChatRoomService chatRoomService;
 
     @Transactional
     public void saveOrUpdateReadStatus(Long userId, Long roomId, Long messageId) {
-        User user = userRepository.getReferenceById(userId);
-        ChatRoom room = chatRoomRepository.getReferenceById(roomId);        
+        User user = userService.getUserById(userId);
+        ChatRoom room = chatRoomService.getChatRoomById(roomId);
         
         chatReadStatusRepository.findByUserIdAndRoomId(userId, roomId)
             .ifPresentOrElse(

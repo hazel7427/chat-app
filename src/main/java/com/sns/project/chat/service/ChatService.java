@@ -1,10 +1,6 @@
 package com.sns.project.chat.service;
 
 
-import com.sns.project.config.constants.RedisKeys.Chat;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +9,6 @@ import com.sns.project.domain.chat.ChatMessage;
 import com.sns.project.domain.chat.ChatRoom;
 import com.sns.project.domain.user.User;
 import com.sns.project.handler.exceptionHandler.exception.notfound.ChatRoomNotFoundException;
-import com.sns.project.chat.dto.response.ChatMessageResponse;
 import com.sns.project.repository.chat.ChatMessageRepository;
 import com.sns.project.repository.chat.ChatRoomRepository;
 import com.sns.project.repository.chat.ChatParticipantRepository;
@@ -22,7 +17,6 @@ import com.sns.project.service.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Deprecated
 @Slf4j
 @Service
 @RequiredArgsConstructor

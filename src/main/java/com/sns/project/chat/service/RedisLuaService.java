@@ -1,18 +1,15 @@
 package com.sns.project.chat.service;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
-import com.sns.project.chat.dto.KafkaNewMessageDto;
+import com.sns.project.chat.service.dto.UnreadCountAndReadUsers;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -74,7 +71,7 @@ public class RedisLuaService {
      * 
      * praticipants, lastread id, messages should be cached in redis
      */
-    public KafkaNewMessageDto processNewMessage(
+    public UnreadCountAndReadUsers processNewMessage(
     String participantsKey,
     String connectedUsersKey,
     String unreadCountHashKey,
@@ -90,6 +87,7 @@ public class RedisLuaService {
         roomId, messageId, senderId
     );
 
+
     if (rawResult instanceof List resultList && resultList.size() == 2) {
         Long unreadCount = Long.parseLong(resultList.get(0).toString());
 
@@ -97,15 +95,20 @@ public class RedisLuaService {
 
         @SuppressWarnings("unchecked")
         List<Object> rawReadUserIds = (List<Object>) resultList.get(1);
-
         Set<Long> readUserIds = rawReadUserIds.stream()
             .map(Object::toString)
             .map(Long::parseLong)
             .collect(Collectors.toSet());
 
-        return new KafkaNewMessageDto(unreadCount, readUserIds);
+        return UnreadCountAndReadUsers.builder()
+            .unreadCount(unreadCount)
+            .readUsers(readUserIds)
+            .build();
     }
 
-    return new KafkaNewMessageDto(0L, Set.of());
+    return UnreadCountAndReadUsers.builder()
+        .unreadCount(0L)
+        .readUsers(Set.of())
+        .build();
 }
 }

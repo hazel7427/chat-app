@@ -1,7 +1,6 @@
 package com.sns.project.chat.service;
 
-import com.sns.project.chat.dto.KafkaChatMessageDto;
-import com.sns.project.chat.dto.KafkaNewMessageDto;
+import com.sns.project.chat.service.dto.UnreadCountAndReadUsers;
 import com.sns.project.config.constants.RedisKeys.Chat;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,17 +14,17 @@ public class UnreadCountService {
     private final RedisLuaService redisLuaService;
     private final RedisPreloadService redisPreloadService;
 
-    public KafkaNewMessageDto handleUnreadCalculation(KafkaChatMessageDto message) {
-        Long roomId = message.getRoomId();
-        Long messageId = message.getMessageId();
-        Long senderId = message.getSenderId();
-
+    public UnreadCountAndReadUsers handleUnreadCalculation(
+        Long roomId,
+        Long messageId,
+        Long senderId
+    ) {
         // ✅ 캐시가 없을 경우 DB → Redis로 미리 적재
         redisPreloadService.preloadRoomData(roomId);
         log.info("✅ 캐시 미리 적재 완료: roomId={}", roomId);
 
         // ✅ Lua 스크립트로 unreadCount 계산 및 자동 읽음 처리
-        KafkaNewMessageDto result = redisLuaService.processNewMessage(
+        UnreadCountAndReadUsers result = redisLuaService.processNewMessage(
             Chat.CHAT_ROOM_PARTICIPANTS_SET_KEY.getParticipants(roomId),
             Chat.CONNECTED_USERS_SET_KEY.getConnectedKey(roomId),
             Chat.CHAT_UNREAD_COUNT_HASH_KEY.getUnreadCountKey(),

@@ -5,7 +5,6 @@ import com.sns.project.aspect.UserContext;
 import com.sns.project.domain.user.User;
 import com.sns.project.chat.dto.request.ChatRoomRequest;
 import com.sns.project.chat.dto.response.AllChatRoomResponse;
-import com.sns.project.chat.dto.response.ChatHistoryResponse;
 import com.sns.project.chat.dto.response.ChatRoomResponse;
 import com.sns.project.handler.exceptionHandler.response.ApiResult;
 import com.sns.project.chat.service.ChatReadService;
