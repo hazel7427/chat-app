@@ -65,52 +65,14 @@ public class ChatService {
     
     }
     
-    /*
-     * 유저의 읽지 않은 메시지를 조회하고 읽음 처리합니다.
-     */
+
     public LastReadIdInfo readAllMessages(Long userId, Long roomId) {
         log.info("모든 메시지들 일음 처리~~~~~");
         String lastReadKey = RedisKeys.Chat.CHAT_LAST_READ_MESSAGE_ID.getLastReadMessageKey(userId, roomId);
         String messageZSetKey = RedisKeys.Chat.CHAT_MESSAGES_KEY.getMessagesKey(roomId);
         String unreadCountKey = RedisKeys.Chat.CHAT_UNREAD_COUNT_HASH_KEY.getUnreadCountKey();
 
-        Long currentLastReadId = chatRedisService.getValue(lastReadKey)
-            .map(Long::parseLong)
-            .orElse(-1L);
-
-        // 최신 메시지 ID (마지막 메시지)
-        List<Long> latestList = chatRedisService.getZSetRangeByIndex(messageZSetKey, -1, -1)
-            .stream().map(Long::parseLong).toList();
-        if (latestList.isEmpty()) {
-            return LastReadIdInfo.builder()
-                .prevLastReadId(currentLastReadId)
-                .newLastReadId(currentLastReadId)
-                .build();
-        }
-
-        Long newLastReadId = latestList.get(0);
-        log.info("newLast!!!!");
-        System.out.println(newLastReadId);
-        System.out.println("PREDV");
-        System.out.println(currentLastReadId);
-        Long startRank = chatRedisService.getRank(messageZSetKey, currentLastReadId.toString()).orElse(-1L);
-        Long endRank = chatRedisService.getRank(messageZSetKey, newLastReadId.toString()).orElse(-1L);
-
-        if (startRank >= 0 && endRank >= 0 && endRank > startRank) {
-            List<Long> midMessages = chatRedisService.getZSetRange(messageZSetKey, startRank + 1, endRank).stream().map(
-                Long::parseLong).collect(Collectors.toList());
-            for (Long mid : midMessages) {
-                chatRedisService.incrementHash(unreadCountKey, mid.toString(), -1);
-            }
-        }
-
-        // 마지막 읽음 갱신
-        chatRedisService.setValue(lastReadKey, newLastReadId.toString());
-
-        return LastReadIdInfo.builder()
-            .newLastReadId(newLastReadId)
-            .prevLastReadId(currentLastReadId)
-            .build();
+        return redisLuaService.processUnreadMessages(lastReadKey, messageZSetKey, unreadCountKey);
     }
 
 

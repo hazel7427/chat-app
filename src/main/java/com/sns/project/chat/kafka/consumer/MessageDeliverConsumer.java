@@ -47,6 +47,7 @@ public class MessageDeliverConsumer {
             .content(message.getContent())
             .timestamp(message.getReceivedAt())
                 .unreadCount(message.getUnreadCount())
+                    .messageId(message.getMessageId())
             .build());
         } catch (IOException e) {
             log.error("🚨 웹소켓 브로드캐스트 실패", e);

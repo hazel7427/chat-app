@@ -92,6 +92,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     public void broadcastToRoom(RoomScopedPayload payload) throws IOException {
         Long roomId = payload.getRoomId();
         log.info("🍉 broadcast to room : {}", roomId);
+        log.info("type: {}", payload.getType());
         Set<WebSocketSession> sessions = roomSessions.get(roomId);
         log.info("session : {}", sessions);
         if (sessions == null || sessions.isEmpty()) return;

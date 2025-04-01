@@ -19,7 +19,7 @@ public class ChatEnterProcessor {
 
     public KafkaChatEnterDeliverRequest process(KafkaChatEnterRequest request) {
         chatPresenceService.userEnteredRoom(request.getRoomId(), request.getUserId());
-        LastReadIdInfo result = chatService.readAllMessages(request.getRoomId(), request.getUserId());
+        LastReadIdInfo result = chatService.readAllMessages(request.getUserId(), request.getRoomId());
 
         log.info("🍉 user {} joined room {}", request.getUserId(), request.getRoomId());
         log.info("🍉 prevLastReadId: {}", result.getPrevLastReadId());

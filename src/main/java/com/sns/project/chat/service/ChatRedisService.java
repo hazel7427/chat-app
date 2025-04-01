@@ -2,6 +2,7 @@ package com.sns.project.chat.service;
 
 import java.util.Objects;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -15,6 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ChatRedisService {
 
     private final RedisTemplate<String, String> chatRedisTemplate;
@@ -57,9 +59,6 @@ public class ChatRedisService {
 
     public Set<String> getZSetRange(String key, double min, double max) {
         return chatRedisTemplate.opsForZSet().rangeByScore(key, min, max);
-    }
-    public Set<String> getZSetRangeByIndex(String key, long start, long end) {
-        return chatRedisTemplate.opsForZSet().range(key, start, end);
     }
 
     public Optional<String> getHighestScoreFromZSet(String key) {
@@ -129,18 +128,13 @@ public class ChatRedisService {
     }
 
 
-    public <T> List<T> getMidRanksFromZSet(String key, 
-    Long from, Long to, Class<T> type) {
-        Long startRank = chatRedisTemplate.opsForZSet().rank(key, from.toString());
-        Long endRank = chatRedisTemplate.opsForZSet().rank(key, to.toString());
-    
-        if (startRank == null || endRank == null || endRank - startRank <= 1) return List.of();
-    
-        Set<String> messageIdStrs = chatRedisTemplate.opsForZSet()
-            .range(key, startRank + 1, endRank - 1);
-        return messageIdStrs.stream()
-            .map(type::cast)
-            .toList();
+    public List<String> getMidRanksFromZSet(String key,
+    Long startRank, Long endRank) {
+
+        log.info("START RANK : {}, END RANK : {}", startRank, endRank);
+
+        return chatRedisTemplate.opsForZSet()
+            .range(key, startRank, endRank).stream().toList();
     }
 
 
