@@ -1,3 +1,7 @@
+-- KEYS[1] = lastReadMessageKey
+-- KEYS[2] = messageZSetKey
+-- KEYS[3] = unreadCountHashKey
+
 local lastReadMessageKey = KEYS[1]
 local messageZSetKey = KEYS[2]
 local unreadCountHashKey = KEYS[3]
@@ -5,21 +9,23 @@ local unreadCountHashKey = KEYS[3]
 -- 최신 메시지 ID 가져오기
 local latestMessageId = redis.call('ZRANGE', messageZSetKey, -1, -1)[1]
 if not latestMessageId then
-    return 0
+    return { -1, -1 }
 end
 
-local currentLastReadId = tonumber(redis.call('GET', lastReadMessageKey) or '-1')
-local newLastReadId = tonumber(latestMessageId)
+local currentLastReadRaw = redis.call('GET', lastReadMessageKey)
+local currentLastReadId = tonumber(currentLastReadRaw) or -1
+local newLastReadId = tonumber(latestMessageId) or -1
 
-if newLastReadId <= currentLastReadId then
-    return 0
+-- 순위 계산
+local startRank = redis.call('ZRANK', messageZSetKey, tostring(currentLastReadId))
+local endRank = redis.call('ZRANK', messageZSetKey, tostring(newLastReadId))
+
+if startRank and endRank and endRank > startRank then
+    local midMessages = redis.call('ZRANGE', messageZSetKey, startRank + 1, endRank)
+    for _, mid in ipairs(midMessages or {}) do
+        redis.call('HINCRBY', unreadCountHashKey, mid, -1)
+    end
 end
 
--- 읽지 않은 메시지 목록 가져오기 & unreadCount 감소
-local unreadMessages = redis.call('ZRANGEBYSCORE', messageZSetKey, currentLastReadId + 1, newLastReadId)
-for _, messageId in ipairs(unreadMessages) do
-    redis.call('HINCRBY', unreadCountHashKey, messageId, -1)
-end
-
-redis.call('SET', lastReadMessageKey, newLastReadId)
-return newLastReadId
+redis.call('SET', lastReadMessageKey, tostring(newLastReadId))
+return { currentLastReadId, newLastReadId }

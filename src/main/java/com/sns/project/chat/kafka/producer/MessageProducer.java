@@ -5,17 +5,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import com.sns.project.chat.kafka.dto.request.KafkaNewMsgCacheRequest;
+import com.sns.project.chat.kafka.dto.request.KafkaNewMsgRequest;
 
 
 @Service
 @RequiredArgsConstructor
-public class MessageCacheProducer {
+public class MessageProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private static final String TOPIC = "message.cache";
+    private static final String TOPIC = "message.received";
 
-    public void send(KafkaNewMsgCacheRequest message) {
+    public void send(KafkaNewMsgRequest message) {
         kafkaTemplate.send(TOPIC, message.getRoomId().toString(), message);
     }
 }

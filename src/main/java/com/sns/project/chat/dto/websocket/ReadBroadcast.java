@@ -1,4 +1,4 @@
-package com.sns.project.chat.dto.response;
+package com.sns.project.chat.dto.websocket;
 
 import com.sns.project.chat.dto.websocket.RoomScopedPayload;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ public class ReadBroadcast implements RoomScopedPayload {
     private final String type = "READ";
     private Long roomId;
     private Long messageId;
-    private Long senderId;
+    private int unreadCount;
 
     @Override
     public Long getRoomId() {

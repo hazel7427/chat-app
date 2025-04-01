@@ -1,6 +1,7 @@
 package com.sns.project.repository.chat;
 
 import com.sns.project.domain.chat.ChatMessage;
+import com.sns.project.domain.chat.ChatRoom;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
+    Optional<ChatMessage> findByChatRoomAndClientMessageId(ChatRoom room, String clientMessageId);
 
     @Query("SELECT cm FROM ChatMessage cm JOIN FETCH cm.sender u "
         + "WHERE cm.chatRoom.id = :chatRoomId "

@@ -1,9 +1,9 @@
 -- KEYS
--- [1] participantsKey <- 채팅방 참여자 목록 (미리 캐싱되어있어야함)
--- [2] connectedUsersKey 
--- [3] unreadCountHashKey 
--- [4] lastReadKeyPattern (ex: "chat:last_read:{userId}:{roomId}")
--- [5] messageZSetKey <- 채팅방 메시지들 목록 (미리 캐싱되어 있어야함)
+-- [1] participantsKey (S): 채팅방 참여자 목록
+-- [2] connectedUsersKey (S): 현재 접속 중인 유저들
+-- [3] unreadCountHashKey (H): 메시지별 unread count 저장소
+-- [4] lastReadKeyPattern (String pattern): ex. "chat:last_read:{userId}:{roomId}"
+-- [5] messageZSetKey (Z): 채팅 메시지 ZSet (score = receivedAt, value = messageId)
 
 -- ARGV
 -- [1] roomId
@@ -17,49 +17,43 @@ local lastReadKeyPattern = KEYS[4]
 local messageZSetKey = KEYS[5]
 
 local roomId = ARGV[1]
-local messageId = tonumber(ARGV[2])
+local messageId = ARGV[2]
 local senderId = ARGV[3]
 
 local unreadCount = 0
 local readUsers = {}
 
--- 채팅방 참여자 목록 조회
 for _, participantId in ipairs(participants) do
     local isConnected = redis.call('SISMEMBER', connectedUsersKey, participantId)
-    local isSender = (tostring(participantId) == tostring(senderId))
+    local isSender = (participantId == senderId)
 
-    -- 유저별 lastReadId 조회
     local lastReadMessageKey = string.gsub(lastReadKeyPattern, "{userId}", participantId)
     lastReadMessageKey = string.gsub(lastReadMessageKey, "{roomId}", roomId)
 
     local lastReadRaw = redis.call('GET', lastReadMessageKey)
     local lastReadId = tonumber(lastReadRaw)
-    if lastReadId == nil then
-        lastReadId = -1
-    end
+    if lastReadId == nil then lastReadId = -1 end
 
-    -- 유저가 채팅방에 접속해있거나 메시지 보낸 유저면 자동 읽음 처리
-    if isSender or isConnected == 1 then
-        -- 혹시 이미 읽음 처리되어있다면 pass
-        if lastReadId < messageId then
-            -- 읽음 처리 (마지막 읽은 아이디 업뎃)
+    if isConnected == 1 or isSender then
+        if lastReadId < tonumber(messageId) then
             redis.call('SET', lastReadMessageKey, messageId)
             table.insert(readUsers, participantId)
 
-            -- 새 메시지 이전의 메시지들 읽음 처리(요청 순서대로 레디스에서 처리하지 않을 경우를 위해)
-            local unreadMessages = redis.call('ZRANGEBYSCORE', messageZSetKey, lastReadId + 1, messageId - 1)
-            for _, mid in ipairs(unreadMessages or {}) do
-                redis.call('HINCRBY', unreadCountHashKey, mid, -1)
+            -- ✅ ZRANK를 활용해 정확한 범위로 unread 메시지 정리
+            local startRank = redis.call('ZRANK', messageZSetKey, tostring(lastReadId))
+            local endRank = redis.call('ZRANK', messageZSetKey, tostring(messageId))
+
+            if startRank and endRank and endRank - startRank > 1 then
+                local midMessages = redis.call('ZRANGE', messageZSetKey, startRank + 1, endRank - 1)
+                for _, mid in ipairs(midMessages or {}) do
+                    redis.call('HINCRBY', unreadCountHashKey, mid, -1)
+                end
             end
         end
     else
-        -- 안읽음 수 + 1
         unreadCount = unreadCount + 1
     end
 end
 
--- 현재 메시지 unreadCount 저장
 redis.call('HSET', unreadCountHashKey, messageId, unreadCount)
-
--- 결과 반환: {unreadCount, 읽은 유저 ID 리스트}
 return { unreadCount, readUsers }

@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import com.sns.project.chat.service.dto.LastReadIdInfo;
 import com.sns.project.chat.service.dto.UnreadCountAndReadUsers;
 
 import java.io.IOException;
@@ -24,13 +25,13 @@ public class RedisLuaService {
     public RedisLuaService(@Qualifier("chatRedisTemplate") RedisTemplate<String, String> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
-    private static final DefaultRedisScript<Long> PROCESS_UNREAD_SCRIPT;
+    private static final DefaultRedisScript<List> PROCESS_UNREAD_SCRIPT;
     private static final DefaultRedisScript<List> PROCESS_NEW_MESSAGE_SCRIPT;
 
     static {
         try {
             // Lua 스크립트 파일 로드
-            PROCESS_UNREAD_SCRIPT = new DefaultRedisScript<>(loadScript("lua/process_unread.lua"), Long.class);
+            PROCESS_UNREAD_SCRIPT = new DefaultRedisScript<>(loadScript("lua/process_unread.lua"), List.class);
             PROCESS_NEW_MESSAGE_SCRIPT = new DefaultRedisScript<>(loadScript("lua/process_new_message.lua"), List.class);
 
         } catch (IOException e) {
@@ -50,12 +51,20 @@ public class RedisLuaService {
     /*
      * last read id and messages should be cached in redis
      */
-    public Optional<Long> processUnreadMessages(String lastReadKey, String messageZSetKey, String unreadCountHashKey) {
-        Long lastReadId = redisTemplate.execute(
+    public LastReadIdInfo processUnreadMessages(String lastReadKey, String messageZSetKey, String unreadCountHashKey) {
+        List<Object> result = redisTemplate.execute(
             PROCESS_UNREAD_SCRIPT,
             List.of(lastReadKey, messageZSetKey, unreadCountHashKey)
         );
-        return Optional.ofNullable(lastReadId);
+
+        List<Long> resultList = result.stream()
+            .map(Object::toString)
+            .map(Long::parseLong)
+            .collect(Collectors.toList());
+        return LastReadIdInfo.builder()
+            .prevLastReadId(resultList.get(0))
+            .newLastReadId(resultList.get(1))
+            .build();
     }
 
     // 📌 새 메시지 처리 메서드 (새로운 메시지가 왔을 때 호출)
@@ -89,11 +98,10 @@ public class RedisLuaService {
 
 
     if (rawResult instanceof List resultList && resultList.size() == 2) {
-        Long unreadCount = Long.parseLong(resultList.get(0).toString());
+        int unreadCount = Integer.parseInt(resultList.get(0).toString());
 
 
 
-        @SuppressWarnings("unchecked")
         List<Object> rawReadUserIds = (List<Object>) resultList.get(1);
         Set<Long> readUserIds = rawReadUserIds.stream()
             .map(Object::toString)
@@ -107,7 +115,7 @@ public class RedisLuaService {
     }
 
     return UnreadCountAndReadUsers.builder()
-        .unreadCount(0L)
+        .unreadCount(0)
         .readUsers(Set.of())
         .build();
 }

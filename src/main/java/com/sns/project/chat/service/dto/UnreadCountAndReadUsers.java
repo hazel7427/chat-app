@@ -16,6 +16,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @Builder
 public class UnreadCountAndReadUsers {
-    private Long unreadCount;
+    private int unreadCount;
     private Set<Long> readUsers;
 }

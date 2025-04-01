@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import lombok.NoArgsConstructor;
+import com.sns.project.chat.dto.websocket.RoomScopedPayload;
 @Getter
 @Builder
 @AllArgsConstructor
@@ -16,7 +17,7 @@ public class MessageBroadcast implements RoomScopedPayload {
     private Long senderId;
     private String content;
     private Long timestamp;
-    private Long unreadCount;
+    private int unreadCount;
 
     @Override
     public Long getRoomId() {

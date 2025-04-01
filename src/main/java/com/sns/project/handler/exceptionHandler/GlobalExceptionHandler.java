@@ -9,6 +9,7 @@ import com.sns.project.handler.exceptionHandler.exception.notfound.NotFoundComme
 import com.sns.project.handler.exceptionHandler.exception.notfound.NotFoundEmailException;
 import com.sns.project.handler.exceptionHandler.exception.notfound.NotFoundNotificationException;
 import com.sns.project.handler.exceptionHandler.exception.badRequest.RegisterFailedException;
+import com.sns.project.handler.exceptionHandler.exception.duplication.DuplicatedMessageException;
 import com.sns.project.handler.exceptionHandler.exception.unauthorized.TokenExpiredException;
 import com.sns.project.handler.exceptionHandler.exception.unauthorized.UnauthorizedException;
 import com.sns.project.handler.exceptionHandler.response.ApiResult;
@@ -36,6 +37,17 @@ public class GlobalExceptionHandler {
     HttpHeaders headers = new HttpHeaders();
     headers.add("Content-Type", "application/json");
     return new ResponseEntity<>(ApiResult.error(throwable, httpStatus), headers, httpStatus);
+  }
+
+  /*
+   * HttpStatus.CONFLICT (409)  
+   * 중복된 메시지
+   */
+  @ExceptionHandler({
+    DuplicatedMessageException.class
+  })
+  public ResponseEntity<?> handleDuplicatedMessage(RuntimeException ex) {
+    return newResponse(ex, HttpStatus.CONFLICT);
   }
 
   /*

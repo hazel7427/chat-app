@@ -11,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,10 +23,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(
+  uniqueConstraints = @UniqueConstraint(columnNames = {"chat_room_id", "clientMessageId"})
+)
 public class ChatMessage {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    
+    @Column(nullable = false, unique = true)
+    private String clientMessageId;
+    
     @ManyToOne
     @JoinColumn(name = "chat_room_id")
     private ChatRoom chatRoom;
@@ -36,13 +44,16 @@ public class ChatMessage {
     @Column(nullable = false)
     private String message;
 
-    @Column(nullable = false)
-    private LocalDateTime sentAt;
 
-    public ChatMessage(ChatRoom chatRoom, User sender, String message) {
+    @Column(nullable = false)
+    private LocalDateTime receivedAt; // 서버가 받은 시각
+    
+
+    public ChatMessage(ChatRoom chatRoom, User sender, String message, String clientMessageId) {
         this.chatRoom = chatRoom;
         this.sender = sender;
         this.message = message;
-        this.sentAt = LocalDateTime.now();
+        this.clientMessageId = clientMessageId;
+        this.receivedAt = LocalDateTime.now();
     }
 }

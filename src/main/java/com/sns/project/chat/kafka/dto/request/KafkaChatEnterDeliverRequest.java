@@ -5,18 +5,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @Builder
-public class KafkaNewMsgCacheRequest {
-    private Long messageId;
+public class KafkaChatEnterDeliverRequest {
+    private Long prevLastReadId;
     private Long roomId;
-    private Long senderId;
-    private String content;
-    private Long timestamp;
+    private Long userId;
+    private Long newLastReadId;
 }

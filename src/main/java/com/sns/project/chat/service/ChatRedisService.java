@@ -7,9 +7,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
+import com.sns.project.domain.chat.ChatRoom;
+
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatRedisService {
@@ -54,6 +57,9 @@ public class ChatRedisService {
 
     public Set<String> getZSetRange(String key, double min, double max) {
         return chatRedisTemplate.opsForZSet().rangeByScore(key, min, max);
+    }
+    public Set<String> getZSetRangeByIndex(String key, long start, long end) {
+        return chatRedisTemplate.opsForZSet().range(key, start, end);
     }
 
     public Optional<String> getHighestScoreFromZSet(String key) {
@@ -120,6 +126,31 @@ public class ChatRedisService {
 
     public Long getSetSize(String key) {
         return chatRedisTemplate.opsForSet().size(key);
+    }
+
+
+    public <T> List<T> getMidRanksFromZSet(String key, 
+    Long from, Long to, Class<T> type) {
+        Long startRank = chatRedisTemplate.opsForZSet().rank(key, from.toString());
+        Long endRank = chatRedisTemplate.opsForZSet().rank(key, to.toString());
+    
+        if (startRank == null || endRank == null || endRank - startRank <= 1) return List.of();
+    
+        Set<String> messageIdStrs = chatRedisTemplate.opsForZSet()
+            .range(key, startRank + 1, endRank - 1);
+        return messageIdStrs.stream()
+            .map(type::cast)
+            .toList();
+    }
+
+
+    public Optional<Long> getRank(String messageZSetKey, String messageId) {
+        return Optional.ofNullable(chatRedisTemplate.opsForZSet().rank(messageZSetKey, messageId));
+    }
+
+
+    public void incrementHash(String unreadCountKey, String messageId, int i) {
+        chatRedisTemplate.opsForHash().increment(unreadCountKey, messageId, i);
     }
 
 

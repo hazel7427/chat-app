@@ -7,7 +7,6 @@ import com.sns.project.chat.dto.request.ChatRoomRequest;
 import com.sns.project.chat.dto.response.AllChatRoomResponse;
 import com.sns.project.chat.dto.response.ChatRoomResponse;
 import com.sns.project.handler.exceptionHandler.response.ApiResult;
-import com.sns.project.chat.service.ChatReadService;
 import com.sns.project.chat.service.ChatRoomService;
 import com.sns.project.chat.service.ChatService;
 import com.sns.project.service.user.UserService;
@@ -26,7 +25,6 @@ public class ChatRoomController {
     private final ChatRoomService chatRoomService;
     private final UserService userService;
     private final ChatService chatService;
-    private final ChatReadService chatReadService;
 
     @PostMapping("/room")
     @AuthRequired
@@ -51,13 +49,7 @@ public class ChatRoomController {
     }
 
 
-    @PostMapping("/room/{roomId}/enter")
-    @AuthRequired
-    public ApiResult<String> enterChatRoom(@PathVariable Long roomId) {
-        Long userId = UserContext.getUserId();
-        System.out.println("✅ [DEBUG] ChatRoomController enterChatRoom 호출" + userId + " " + roomId);
-        chatReadService.markAllAsRead(userId, roomId);
-        return ApiResult.success("ok");
-    }
+
+
     
 }

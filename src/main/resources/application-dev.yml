@@ -12,6 +12,10 @@ spring:
         retry.backoff.ms: 1000
         max.poll.interval.ms: 300000
     producer:
+      acks: all
+      retries: 2147483647
+      properties:
+        enable.idempotence: true
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   mail:
