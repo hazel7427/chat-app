@@ -1,5 +1,6 @@
 spring:
   kafka:
+    bootstrap-servers: localhost:9092
     listener:
       ack-mode: manual
       retry:
@@ -76,3 +77,12 @@ gcs:
   bucket-name:  sns-bucket02
   credentials:
     file-path: ${GOOGLE_APPLICATION_CREDENTIALS}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
