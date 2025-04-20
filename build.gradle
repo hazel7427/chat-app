@@ -30,6 +30,8 @@ dependencyManagement {
 }
 
 dependencies {
+	implementation project(":chat-core")
+
 	// ✅ JPA 관련 라이브러리 (Spring Boot 3.x 기본 사용)
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
@@ -132,10 +134,6 @@ test {
 	testLogging {
 		events "passed", "skipped", "failed"
 	}
-}
-
-wrapper {
-	gradleVersion = '8.5'
 }
 
 
